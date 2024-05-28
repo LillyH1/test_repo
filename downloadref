@@ -1,0 +1,44 @@
+import os
+import requests
+from bs4 import BeautifulSoup
+
+references = [
+    "Konieczkowski, D.J., Johannessen, C.M. & Garraway, L.A. A Convergence-Based Framework for Cancer Drug Resistance. Cancer cell 33, 801-815 (2018).",
+   ## "other references"
+]
+
+def search_pubmed(query):
+    url = f"https://pubmed.ncbi.nlm.nih.gov/?term={query}"
+    response = requests.get(url)
+    return response.text
+
+def parse_pubmed(html):
+    soup = BeautifulSoup(html, 'html.parser')
+    results = soup.find_all('div', class_='docsum-content')
+    if results:
+        link = results[0].find('a')['href']
+        return f"https://pubmed.ncbi.nlm.nih.gov{link}"
+    return None
+
+
+def download_pdf(pubmed_url, save_path):
+    print(f"Download PDF from {pubmed_url} to {save_path}")
+
+# 指定保存路径
+save_directory = r"save_path"
+
+for ref in references:
+    query = ref.replace(' ', '+')
+    html = search_pubmed(query)
+    pubmed_url = parse_pubmed(html)
+    if pubmed_url:
+        # 构造文件名
+        file_name = ref[:30] + ".pdf" 
+        # 合并保存路径和文件名
+        save_path = os.path.join(save_directory, file_name)
+        # 下载PDF
+        download_pdf(pubmed_url, save_path)
+    else:
+        print(f"No results found for: {ref}")
+
+print("批量下载完成")
